@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI NIDS Monitor</title>
+  <style>
+    :root { --ink: #17202a; --muted: #68737d; --paper: #f4f1ea; --panel: #fffdf8; --line: #ded9cf; --teal: #087f8c; --red: #c54842; --green: #39795b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: radial-gradient(circle at 10% 0%, #dceeed, transparent 34%), var(--paper); font: 15px/1.5 Georgia, serif; }
+    main { max-width: 1180px; margin: 0 auto; padding: 42px 22px 60px; }
+    header { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 30px; }
+    h1 { margin: 0; font: 700 clamp(32px, 5vw, 58px)/1.02 Georgia, serif; letter-spacing: 0; }
+    .subtitle { max-width: 390px; color: var(--muted); margin: 0; }
+    .upload { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); padding: 18px; box-shadow: 8px 8px 0 #d3e4e1; }
+    input[type=file] { max-width: 100%; color: var(--muted); }
+    button { border: 0; background: var(--teal); color: white; padding: 11px 18px; font: 700 14px Georgia, serif; cursor: pointer; }
+    button:hover { background: #06636d; }
+    .error { margin-top: 16px; padding: 12px 15px; border-left: 4px solid var(--red); background: #fbe7e4; color: #7a2724; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 28px 0; }
+    .stat { background: var(--panel); border-top: 4px solid var(--teal); padding: 16px; }
+    .stat:nth-child(2) { border-color: var(--red); } .stat:nth-child(3) { border-color: var(--green); }
+    .stat-label { color: var(--muted); font-size: 13px; } .stat-value { display: block; margin-top: 4px; font: 700 30px Georgia, serif; }
+    .table-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); }
+    table { border-collapse: collapse; width: 100%; min-width: 540px; } th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); } th { color: var(--muted); font-size: 13px; font-weight: normal; } tr:last-child td { border-bottom: 0; }
+    .attack { color: var(--red); font-weight: bold; } .benign { color: var(--green); font-weight: bold; }
+    h2 { margin: 34px 0 12px; font-size: 22px; }
+    @media (max-width: 700px) { header { display: block; } .subtitle { margin-top: 14px; } .stats { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div><h1>AI NIDS Monitor</h1></div>
+      <p class="subtitle">Upload network-flow data and review the model's latest intrusion predictions.</p>
+    </header>
+
+    <form class="upload" method="post" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".csv,text/csv" required>
+      <button type="submit">Analyze CSV</button>
+    </form>
+
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+    {% if results %}
+    <section class="stats" aria-label="Detection summary">
+      <div class="stat"><span class="stat-label">Flows analyzed</span><span class="stat-value">{{ "{:,}".format(results.total_count) }}</span></div>
+      <div class="stat"><span class="stat-label">Attacks detected</span><span class="stat-value">{{ "{:,}".format(results.attack_count) }}</span></div>
+      <div class="stat"><span class="stat-label">Benign flows</span><span class="stat-value">{{ "{:,}".format(results.benign_count) }}</span></div>
+      <div class="stat"><span class="stat-label">Attack rate</span><span class="stat-value">{{ results.attack_rate }}%</span></div>
+    </section>
+
+    <h2>Recent predictions</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>{% if results.results and results.results[0].original_label is defined %}<th>Original label</th>{% endif %}<th>Prediction</th><th>Attack probability</th></tr></thead>
+        <tbody>
+          {% for row in results.results %}
+          <tr>
+            {% if row.original_label is defined %}<td>{{ row.original_label }}</td>{% endif %}
+            <td class="{{ row.prediction|lower }}">{{ row.prediction }}</td>
+            <td>{{ row.attack_probability }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </main>
+</body>
+</html>

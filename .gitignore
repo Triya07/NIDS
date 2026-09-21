@@ -5,3 +5,13 @@ __pycache__/
 dataset/*.csv
 dataset/processed/
 .env
+logs/detection_results.csv
+
+dataset/
+.venv/
+venv/
+__pycache__/
+*.pycmodels/nids_model.joblib
+
+ logs/
+ detection_results.csv
